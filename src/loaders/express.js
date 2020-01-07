@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import { errors as celebrateErrorHandler } from 'celebrate';
 
 import routes from '../api';
 import config from '../config';
@@ -17,6 +18,8 @@ export default ({ app }) => {
   app.use(cors());
   app.use(bodyParser.json());
   app.use(config.api.prefix, routes);
+
+  app.use(celebrateErrorHandler());
 
   /// catch 404 and forward to error handler
   app.use((req, res, next) => {

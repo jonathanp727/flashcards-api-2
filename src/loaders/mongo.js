@@ -2,8 +2,8 @@ import { MongoClient } from 'mongodb';
 
 import config from '../config';
 
-let db = null;
-let client = null;
+export let db = null;
+export let client = null;
 
 export function getDb() {
   if (db === null) {
