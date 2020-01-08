@@ -53,9 +53,15 @@ async function increment(userId, wordId) {
  * @param wordJlpt   { level: Number, index: Number }
  * @param kindaKnew  boolean   // Marks whether the user kind of knew the word or didn't at all
  */
-async function lookup(query) {
+async function lookup(userId, query) {
   // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
   // ^ for pushing to user recent lookups
+
+  const lookupResults = DictModel.lookup(query);
+  const userWords = WordModel.findUserWords(userId, lookupResults.map((res) => res._id));
+
+  const joinedResults = /* Join lookupResults and userWords arrays on wordId */;
+  return joinedResults;
 }
 
 export default {
