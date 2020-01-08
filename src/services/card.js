@@ -17,7 +17,7 @@ import UpcomingHandler from './lib/UpcomingHandler';
 async function doCard(userId, wordId) {
   const user = await UserModel.findById(userId);
   const word = await WordModel.findUserWord(userId, wordId);
-  const isUpcoming = CardHandler.getIsUpcoming(word);
+  const isUpcoming = CardHandler.getIsUpcoming(word.card);
 
   const wordUpdateQuery = { $set: {} };
   const userUpdateQuery = { $set: {} };
