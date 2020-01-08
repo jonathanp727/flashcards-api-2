@@ -2,14 +2,14 @@ import { ObjectId } from 'mongo';
 
 import { db, client } from '../loaders/mongo';
 
-const USER = 'word';
+const WORD = 'word';
 
-const create = (schema) => db.collection(USER).insertOne(schema).then(res => res.ops[0]);
-const findUserWord = (userId, wordId) => db.collection(USER).findOne({
+const create = (schema) => db.collection(WORD).insertOne(schema).then(res => res.ops[0]);
+const findUserWord = (userId, wordId) => db.collection(WORD).findOne({
   userId: ObjectId(userId),
   wordId: ObjectId(wordId),
 });
-const findUserWords = (userId, wordIds) => db.collection(USER).find({
+const findUserWords = (userId, wordIds) => db.collection(WORD).find({
   userId: ObjectId(userId),
   wordId: {
     $in: [
@@ -17,6 +17,15 @@ const findUserWords = (userId, wordIds) => db.collection(USER).find({
     ],
   },
 });
+const findTodaysCards = (userId) => {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  return db.collection(WORD).find({
+    userId: ObjectId(userId),
+    'card.date': today,
+  });
+}
 
 export default {
   create,
