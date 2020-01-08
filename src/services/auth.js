@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import config from '../config';
 import logger from '../loaders/logger';
 import UserModel from '../models/user';
+import StatsHandler from './lib/StatsHandler';
 
 async function signUp(data) {
   try {
@@ -12,9 +13,24 @@ async function signUp(data) {
     const hashedPassword = await argon2.hash(data.password, { salt });
 
     const user = await UserModel.create({
-      ...data,
-      salt: salt.toString('hex'),
-      password: hashedPassword,
+      general: {
+        username: data.username,
+        email: data.email,
+        passwordHash: hashedPassword,
+        salt: salt.toString('hex'),
+        timezone: 0,
+      },
+      upcoming: [],
+      settings: {
+        dailyNewCardLimit: 5,
+      },
+      stats: StatsHandler.newUserStats(),
+      history: {
+        lastSession: {
+          date: null,
+          upcomingCardsDone: 0,
+        }
+      },
     });
 
     const token = generateToken(user);
