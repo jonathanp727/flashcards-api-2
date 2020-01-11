@@ -26,6 +26,14 @@ const findTodaysCards = (userId) => {
     'card.date': today,
   });
 }
+const updateMany = (userId, wordIds, query) => db.collection(WORD).update({
+  userId: ObjectId(userId),
+  wordId: {
+    $in: [
+      wordIds.map(wordId => ObjectId(wordId)),
+    ],
+  },
+}, query);
 
 export default {
   create,

@@ -36,3 +36,6 @@ private
 
 # Private environmental variables
 .env
+
+# Directory for notes, plans, ideas, etc.
+notes

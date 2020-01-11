@@ -46,19 +46,52 @@ async function doCard(userId, wordId) {
  */
 async function startCardSession(userId) {
   const user = await UserModel.findById(userId);
+  const unordedUpcomingWords = await WordModel.findUserWords(user.upcoming.map((el) => el.wordId));
+
+  const todaysUpcoming = doUpcomingPreProcessing(user, unordedUpcomingWords);
+
   const cardsToDo = await WordModel.findTodaysCards(userId);
-  const upcomingEntries = await DictModel.findByIds(user.upcoming.map((el) => el.wordId));
-
-  const detailedUpcoming = /* Join upcomingEntries and user.upcoming arrays on wordId */;
-
+  const upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
   const inProgEntries = await DictModel.findByIds(cardsToDo.map((el) => el.wordId));
 
-  const { dirty, upcoming } = UpcomingHandler.handleStartSession(detailedUpcoming);
-  if (dirty) {
-    await UserModel.update(userId, { $set: { upcoming } });
+  return { upcoming: upcomingEntries, inProg: inProgEntries };
+}
+
+async function doUpcomingPreProcessing(user, unordedUpcomingWords) {
+  const upcoming = user.upcoming;
+  // Normalize upcoming words by wordId for easy access in upcominghandler
+  const upcomingData = normalize(unordedUpcomingWords);
+
+  const expiredIndices = UpcomingHandler.removeExpiredCards(upcoming, upcomingData);
+  if (expiredIndices.length > 0) {
+    const wordIds = [];
+    expiredIndices.forEach((i) => {
+      const wordIds.push(upcoming[i].wordId);
+      upcoming.splice(i, 1);
+    });
+
+    await UserModel.update(user._id, { $pull: { 'upcoming.wordId': { $in: wordIds } } });
+    await WordModel.updateMany(user._id, wordIds, { $set: { card: null } });
   }
 
-  return [...upcomingEntries, ...inProgEntries];
+  const cardsToAdd = UpcomingHandler.loadNewCards(upcoming, user.settings.dailyNewCardLimit);
+  if (cardsToAdd.length > 0) {
+    const wordIds = [];
+    wordsToAdd.forEach((el) => {
+      upcoming.push(el);
+      wordIds.push(el.wordId);
+    });
+    await UserModel.update(user._id, { $push: { upcoming: { $each: cardsToAdd } } });
+    await WordModel.updateMany(user._id, wordIds, { $set: { card: new Card() } });
+  }
+
+  return upcoming.slice(0, user.settings.dailyNewCardLimit);
+}
+
+function normalize(words) {
+  const ids = {};
+  words.forEach((w) => ids[w.wordId] = w);  
+  return ids;
 }
 
 export default {
