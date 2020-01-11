@@ -4,6 +4,7 @@ import DictModel from '../models/dict';
 import CardHandler from './lib/CardHandler';
 import StatsHandler from './lib/StatsHandler';
 import UpcomingHandler from './lib/UpcomingHandler';
+import { isSameDay } from '../helpers/date';
 
 /**
  * Determines new interval for flashcard based on responseQuality (1-5).
@@ -46,44 +47,37 @@ async function doCard(userId, wordId) {
  */
 async function startCardSession(userId) {
   const user = await UserModel.findById(userId);
-  const unordedUpcomingWords = await WordModel.findUserWords(user.upcoming.map((el) => el.wordId));
 
-  const todaysUpcoming = doUpcomingPreProcessing(user, unordedUpcomingWords);
+  const numUpcomingLeftToday = isSameDay(user.history.lastSession.date) ?
+    user.settings.dailyNewCardLimit - user.history.lastSession.upcomingCardsDone :
+    user.settings.dailyNewCardLimit;
+
+  let upcomingEntries = [];
+  if (numUpcomingLeftToday > 0) {
+    const unordedUpcomingWords = await WordModel.findUserWords(user.upcoming.map((el) => el.wordId));
+
+    const todaysUpcoming = doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday);
+    upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
+  }
 
   const cardsToDo = await WordModel.findTodaysCards(userId);
-  const upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
   const inProgEntries = await DictModel.findByIds(cardsToDo.map((el) => el.wordId));
 
   return { upcoming: upcomingEntries, inProg: inProgEntries };
 }
 
-async function doUpcomingPreProcessing(user, unordedUpcomingWords) {
-  const upcoming = user.upcoming;
+async function doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday) {
+  let upcoming = user.upcoming;
+  // A check to see if a user has already done a session today since this
+  // preprocesser only needs to be run once a day
+  if (numUpcomingLeftToday !== user.settings.dailyNewCardLimit) return upcoming.slice(0, numUpcomingLeftToday);
+
   // Normalize upcoming words by wordId for easy access in upcominghandler
   const upcomingData = normalize(unordedUpcomingWords);
 
-  const expiredIndices = UpcomingHandler.removeExpiredCards(upcoming, upcomingData);
-  if (expiredIndices.length > 0) {
-    const wordIds = [];
-    expiredIndices.forEach((i) => {
-      const wordIds.push(upcoming[i].wordId);
-      upcoming.splice(i, 1);
-    });
+  upcoming = UpcomingHandler.removeExpiredCards(upcoming, upcomingData, user._id);
 
-    await UserModel.update(user._id, { $pull: { 'upcoming.wordId': { $in: wordIds } } });
-    await WordModel.updateMany(user._id, wordIds, { $set: { card: null } });
-  }
-
-  const cardsToAdd = UpcomingHandler.loadNewCards(upcoming, user.settings.dailyNewCardLimit);
-  if (cardsToAdd.length > 0) {
-    const wordIds = [];
-    wordsToAdd.forEach((el) => {
-      upcoming.push(el);
-      wordIds.push(el.wordId);
-    });
-    await UserModel.update(user._id, { $push: { upcoming: { $each: cardsToAdd } } });
-    await WordModel.updateMany(user._id, wordIds, { $set: { card: new Card() } });
-  }
+  upcoming = UpcomingHandler.doAutofill(upcoming, user.settings.dailyNewCardLimit);
 
   return upcoming.slice(0, user.settings.dailyNewCardLimit);
 }
