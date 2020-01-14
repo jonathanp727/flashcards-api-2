@@ -14,7 +14,7 @@ async function signUp(data) {
 
     const user = await UserModel.create({
       general: {
-        username: data.username,
+        username: data.name,
         email: data.email,
         passwordHash: hashedPassword,
         salt: salt.toString('hex'),
@@ -24,7 +24,7 @@ async function signUp(data) {
       settings: {
         dailyNewCardLimit: 5,
       },
-      stats: StatsHandler.newUserStats(),
+      stats: StatsHandler.createUserStats(),
       history: {
         lastSession: {
           date: null,

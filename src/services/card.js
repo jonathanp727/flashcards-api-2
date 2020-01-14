@@ -54,9 +54,9 @@ async function startCardSession(userId) {
 
   let upcomingEntries = [];
   if (numUpcomingLeftToday > 0) {
-    const unordedUpcomingWords = await WordModel.findUserWords(user.upcoming.map((el) => el.wordId));
+    const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.map((el) => el.wordId));
 
-    const todaysUpcoming = doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday);
+    const todaysUpcoming = await doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday);
     upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
   }
 
@@ -75,9 +75,9 @@ async function doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLe
   // Normalize upcoming words by wordId for easy access in upcominghandler
   const upcomingData = normalize(unordedUpcomingWords);
 
-  upcoming = UpcomingHandler.removeExpiredCards(upcoming, upcomingData, user._id);
+  upcoming = await UpcomingHandler.removeExpiredCards(upcoming, upcomingData, user._id);
 
-  upcoming = UpcomingHandler.doAutofill(upcoming, user.settings.dailyNewCardLimit);
+  upcoming = await UpcomingHandler.doAutofill(upcoming, user.settings.dailyNewCardLimit, user._id, user.stats.jlpt);
 
   return upcoming.slice(0, user.settings.dailyNewCardLimit);
 }

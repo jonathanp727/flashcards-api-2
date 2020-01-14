@@ -4,11 +4,11 @@ function getIsUpcoming(card) {
 
 function createCard() {
   return {
-    this.ef = 2.5;
-    this.n = 0;
-    this.interval = 0;
-    this.caution = false;
-    this.date = null;
+    ef: 2.5,
+    n: 0,
+    interval: 0,
+    caution: false,
+    date: null,
   };
 }
 

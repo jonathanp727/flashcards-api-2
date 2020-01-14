@@ -1,5 +1,6 @@
 import DictModel from '../../models/dict';
 import WordModel from '../../models/word';
+import UserModel from '../../models/user';
 import WordHandler from './WordHandler';
 import CardHandler from './CardHandler';
 import StatsHandler from './StatsHandler';
@@ -26,10 +27,10 @@ async function removeExpiredCards(upcoming, wordData, userId) {
   return upcoming;
 }
 
-async function doAutofill(upcoming, numCardsToAdd, userId) {
+async function doAutofill(upcoming, numCardsToAdd, userId, userJlpt) {
   if(upcoming.length >= numCardsToAdd) return upcoming;
 
-  const cursor = await DictModel.getNextWordsByJlpt(user.stats.jlpt);
+  const cursor = await DictModel.getNextWordsByJlpt(userJlpt);
   let newUserJlpt = {};
   while (upcoming.length < numCardsToAdd) {
     const word = await cursor.next();
@@ -38,17 +39,17 @@ async function doAutofill(upcoming, numCardsToAdd, userId) {
     if (!userWord || !userWord.card) {
       upcoming.push(createUpcomingEl(word._id, true));
 
-      if (userWord) await WordModel.update(userId, word._id, { $set: card: CardHandler.createCard() });
+      if (userWord) await WordModel.update(userId, word._id, { $set: { card: CardHandler.createCard() } });
       else await WordModel.create(WordHandler.createWord({
         userId,
-        wordId,
+        wordId: word._id,
         stats: StatsHandler.createWordStats(),
         card: CardHandler.createCard(),
         jlpt: word.jlpt,
       }));
 
       // If this is the last word to be added, record jlpt stats for updating user's level
-      if(newWords.length === numCardsToAdd) {
+      if(upcoming.length === numCardsToAdd) {
         newUserJlpt = { level: word.jlpt.level, index: word.jlpt.index + 1 };
       }
     }
@@ -59,6 +60,6 @@ async function doAutofill(upcoming, numCardsToAdd, userId) {
 }
 
 export default {
-  getExpiredCards,
+  removeExpiredCards,
   doAutofill,
 };

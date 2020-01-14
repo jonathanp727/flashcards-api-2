@@ -1,3 +1,5 @@
+import { ObjectId } from 'mongodb';
+
 import { db, client } from '../loaders/mongo';
 
 const USER = 'user';
@@ -11,4 +13,5 @@ export default {
   create,
   findById,
   findByEmail,
+  update,
 };
