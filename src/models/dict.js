@@ -15,7 +15,7 @@ const lookup = (query) => db.collection(DICTIONARY).find({
     { 'r_ele.reb': query },
     { 'k_ele.keb': query },
   ],
-}).project({ sentences: 0 });
+}).toArray();
 const getNextWordsByJlpt = (jlpt) => (
   db.collection(DICTIONARY).find({
     $or: [

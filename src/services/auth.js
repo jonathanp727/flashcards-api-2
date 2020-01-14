@@ -29,7 +29,8 @@ async function signUp(data) {
         lastSession: {
           date: null,
           upcomingCardsDone: 0,
-        }
+        },
+        recentLookups: [],
       },
     });
 

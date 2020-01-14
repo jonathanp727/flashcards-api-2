@@ -15,6 +15,9 @@ import UpcomingHandler from './lib/UpcomingHandler';
  * @param kindaKnew  boolean   // Marks whether the user kind of knew the word or didn't at all
  */
 async function increment(userId, wordId) {
+  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
+  // ^ for pushing to user recent lookups
+
   const user = await UserModel.findById(userId);
   const word = await WordModel.findUserWord(userId, wordId);
 
@@ -54,14 +57,21 @@ async function increment(userId, wordId) {
  * @param kindaKnew  boolean   // Marks whether the user kind of knew the word or didn't at all
  */
 async function lookup(userId, query) {
-  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
-  // ^ for pushing to user recent lookups
+  const lookupResults = await DictModel.lookup(query);
+  const userWords = await WordModel.findUserWords(userId, lookupResults.map((res) => res._id));
+  console.log(lookupResults)
 
-  const lookupResults = DictModel.lookup(query);
-  const userWords = WordModel.findUserWords(userId, lookupResults.map((res) => res._id));
+  /* Join lookupResults and userWords arrays on wordId */
+  const joinedResults = joinWords(lookupResults, userWords);
 
-  const joinedResults = /* Join lookupResults and userWords arrays on wordId */;
   return joinedResults;
+}
+
+function joinWords(entries, words) {
+  const d = {};
+  words.forEach(w => d[w.wordId] = w);
+  entries.forEach(e => e.data = d[e._id]);
+  return entries;
 }
 
 export default {
