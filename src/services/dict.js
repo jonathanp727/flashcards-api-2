@@ -1,9 +1,10 @@
 import UserModel from '../models/user';
 import WordModel from '../models/word';
 import DictModel from '../models/dict';
-import CardHandler from './lib/CardHandler';
-import StatsHandler from './lib/StatsHandler';
-import UpcomingHandler from './lib/UpcomingHandler';
+import CardHandler from './handlers/card';
+import StatsHandler from './handlers/stats';
+import UpcomingHandler from './handlers/upcoming';
+import HistoryHandler from './handlers/history';
 
 /**
  * Increments the lookup counter of a word for a particular user and determines
@@ -47,6 +48,24 @@ async function increment(userId, wordId) {
   await UserModel.update(userId, userUpdateQuery);
   await WordModel.update(word._id, wordUpdateQuery);
 }
+
+// async function increment(userId, wordId) {
+//   const user = await UserModel.findById(userId);
+//   const word = await WordModel.findUserWord(userId, wordId);
+//   const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
+
+//   if (CardHandler.isCardAlready(word.card)) {
+//     CardHandler.increment(word.card, operations);
+//   } else {
+//     UpcomingHandler.checkShouldAddToUpcoming(word, user.upcoming, operations);
+//   }
+
+//   StatsHandler.processIncrement(user.stats, word.stats, operations);
+//   HistoryHandler.processIncrement(operations);
+
+//   await UserModel.update(userId, operations.user);
+//   await WordModel.update(word._id, operations.word);
+// }
 
 /**
  * Gets all words in a dictionary that matches a query and updates user lookup history.

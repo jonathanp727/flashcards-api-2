@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto';
 import config from '../config';
 import logger from '../loaders/logger';
 import UserModel from '../models/user';
-import StatsHandler from './lib/StatsHandler';
+import StatsHandler from './handlers/stats';
 
 async function signUp(data) {
   try {
@@ -20,9 +20,11 @@ async function signUp(data) {
         salt: salt.toString('hex'),
         timezone: 0,
       },
-      upcoming: [],
-      settings: {
+      upcoming: {
         dailyNewCardLimit: 5,
+        words: [],
+      },
+      settings: {
       },
       stats: StatsHandler.createUserStats(),
       history: {

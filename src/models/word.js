@@ -5,6 +5,7 @@ import { db, client } from '../loaders/mongo';
 const WORD = 'word';
 
 const create = (schema) => db.collection(WORD).insertOne(schema).then(res => res.ops[0]);
+const createMany = (schemas) => db.collection(WORD).insertMany(schemas);
 const findUserWord = (userId, wordId) => db.collection(WORD).findOne({
   userId: ObjectId(userId),
   wordId: ObjectId(wordId),
@@ -45,6 +46,7 @@ const updateMany = (userId, wordIds, query) => db.collection(WORD).updateMany({
 
 export default {
   create,
+  createMany,
   findUserWord,
   findUserWords,
   findTodaysCards,

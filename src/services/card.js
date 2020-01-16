@@ -1,10 +1,11 @@
 import UserModel from '../models/user';
 import WordModel from '../models/word';
 import DictModel from '../models/dict';
-import CardHandler from './lib/CardHandler';
-import StatsHandler from './lib/StatsHandler';
-import UpcomingHandler from './lib/UpcomingHandler';
-import { isSameDay } from '../helpers/date';
+import CardHandler from './handlers/card';
+import StatsHandler from './handlers/stats';
+import UpcomingHandler from './handlers/upcoming';
+import { getUpcomingLeftToday } from './lib/upcoming/auxiliary';
+import UpdateOperation from '../helpers/UpdateOperation';
 
 /**
  * Determines new interval for flashcard based on responseQuality (1-5).
@@ -37,26 +38,22 @@ async function doCard(userId, wordId) {
 }
 
 /**
- * Checks and updates upcoming array and then returns all words to be done today.
+ * To be called when a user starts a flashcard session Checks and updates upcoming
+ * array then returns entries for every card due today.
  *
- * @param userId          ObjectId
- * @param wordId          ObjectId
- * @param upcoming        Boolean  True if card is in upcoming arr and not in cards arr
- * @param responseQuality Number (from 1 to 5)
- * @return    { user, redo (boolean that states whether card needs to be redone)}
+ * @param   userId  ObjectId
+ * @return          Object   { upcoming: [Entry], inProg: [Entry] }
  */
 async function startCardSession(userId) {
   const user = await UserModel.findById(userId);
 
-  const numUpcomingLeftToday = isSameDay(user.history.lastSession.date) ?
-    user.settings.dailyNewCardLimit - user.history.lastSession.upcomingCardsDone :
-    user.settings.dailyNewCardLimit;
+  const numUpcomingLeftToday = getUpcomingLeftToday(user.history.lastSession, user.upcoming.dailyNewCardLimit);
 
   let upcomingEntries = [];
   if (numUpcomingLeftToday > 0) {
-    const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.map((el) => el.wordId));
+    const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.words.map((el) => el.wordId));
 
-    const todaysUpcoming = await doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday);
+    const todaysUpcoming = await UpcomingHandler.doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLeftToday);
     upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
   }
 
@@ -64,28 +61,6 @@ async function startCardSession(userId) {
   const inProgEntries = await DictModel.findByIds(cardsToDo.map((el) => el.wordId));
 
   return { upcoming: upcomingEntries, inProg: inProgEntries };
-}
-
-async function doUpcomingPreProcessing(user, unordedUpcomingWords, numUpcomingLeftToday) {
-  let upcoming = user.upcoming;
-  // A check to see if a user has already done a session today since this
-  // preprocesser only needs to be run once a day
-  if (numUpcomingLeftToday !== user.settings.dailyNewCardLimit) return upcoming.slice(0, numUpcomingLeftToday);
-
-  // Normalize upcoming words by wordId for easy access in upcominghandler
-  const upcomingData = normalize(unordedUpcomingWords);
-
-  upcoming = await UpcomingHandler.removeExpiredCards(upcoming, upcomingData, user._id);
-
-  upcoming = await UpcomingHandler.doAutofill(upcoming, user.settings.dailyNewCardLimit, user._id, user.stats.jlpt);
-
-  return upcoming.slice(0, user.settings.dailyNewCardLimit);
-}
-
-function normalize(words) {
-  const ids = {};
-  words.forEach((w) => ids[w.wordId] = w);  
-  return ids;
 }
 
 export default {
