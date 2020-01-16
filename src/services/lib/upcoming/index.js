@@ -3,10 +3,16 @@ import WordModel from '../../../models/word';
 
 // The number of days of new cards to be held in upcoming
 const UPCOMING_CAPACITY_MULTIPLIER = 5;
+const DEFAULT_DAILYNEWCARDLIMIT = 5;
 
 function Upcoming(upcoming) {
-  this.words = upcoming.words;
-  this.dailyNewCardLimit = upcoming.dailyNewCardLimit;
+  if (upcoming) {
+    this.words = upcoming.words;
+    this.dailyNewCardLimit = upcoming.dailyNewCardLimit;
+  } else {
+    this.words = [];
+    this.dailyNewCardLimit = DEFAULT_DAILYNEWCARDLIMIT;
+  }
 }
 
 function UpcomingEl(wordId, wasAutofilled) {

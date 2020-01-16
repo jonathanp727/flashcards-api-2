@@ -5,36 +5,20 @@ import { randomBytes } from 'crypto';
 import config from '../config';
 import logger from '../loaders/logger';
 import UserModel from '../models/user';
-import StatsHandler from './handlers/stats';
+import User from './schema/user';
 
 async function signUp(data) {
   try {
     const salt = randomBytes(32);
     const hashedPassword = await argon2.hash(data.password, { salt });
 
-    const user = await UserModel.create({
-      general: {
-        username: data.name,
-        email: data.email,
-        passwordHash: hashedPassword,
-        salt: salt.toString('hex'),
-        timezone: 0,
-      },
-      upcoming: {
-        dailyNewCardLimit: 5,
-        words: [],
-      },
-      settings: {
-      },
-      stats: StatsHandler.createUserStats(),
-      history: {
-        lastSession: {
-          date: null,
-          upcomingCardsDone: 0,
-        },
-        recentLookups: [],
-      },
-    });
+    const user = await UserModel.create(new User({
+      name: data.name,
+      email: data.email,
+      passwordHash: hashedPassword,
+      saltHex: salt.toString('hex'),
+      jlptLevel: data.jlpt,
+    }));
 
     const token = generateToken(user);
 

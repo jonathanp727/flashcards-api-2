@@ -1,9 +1,8 @@
 import DictModel from '../../models/dict';
 import WordModel from '../../models/word';
 import UserModel from '../../models/user';
-import WordHandler from './word';
-import CardHandler from './card';
-import StatsHandler from './stats';
+import Word from '../schema/word';
+import Card from '../lib/card';
 
 import Upcoming from '../lib/upcoming';
 import { checkLimitIsFresh } from '../lib/upcoming/auxiliary';
@@ -35,19 +34,18 @@ async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLef
   // Functions for doAutofill to call that append additional db operations
   // Done in order to keep all db updates away from strict business logic files
   const createWordsOperation = [];
-  const createWord = (wordId, jlpt) => createWordsOperation.push(WordHandler.createWord({
+  const createWord = (wordId, jlpt) => createWordsOperation.push(new Word({
     userId: user._id,
     wordId,
-    stats: StatsHandler.createWordStats(),
-    card: CardHandler.createCard(),
     jlpt,
+    withCard: true,
   }));
   const addCardWordIds = []
   const addCardToWord = (wordId) => addCardWordIds.push(wordId);
   const { numAdded, updatedJlpt } = await user.upcoming.doAutofill(createWord, addCardToWord, user._id, user.stats.jlpt);
   if (numAdded > 0) {
     await WordModel.createMany(createWordsOperation);
-    await WordModel.updateMany(user._id, addCardWordIds, { $set: { card: CardHandler.createCard() } });
+    await WordModel.updateMany(user._id, addCardWordIds, { $set: { card: new Card() } });
     await UserModel.update(user._id, { $set: { 'stats.jlpt': updatedJlpt }, $push: { 'upcoming.words': { $each: user.upcoming.words.slice(-1 * numAdded) } } });
   }
 

@@ -17,6 +17,7 @@ export default (app) => {
         name: Joi.string().required(),
         email: Joi.string().required(),
         password: Joi.string().required(),
+        jlpt: Joi.number().required(),
       }),
     }),
     async (req, res, next) => {
