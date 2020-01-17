@@ -1,6 +1,8 @@
 import DictModel from '../../../models/dict';
 import WordModel from '../../../models/word';
 
+import { checkLimitFresh, markLimitNotFresh } from './auxiliary';
+
 // The number of days of new cards to be held in upcoming
 const UPCOMING_CAPACITY_MULTIPLIER = 5;
 const DEFAULT_DAILYNEWCARDLIMIT = 5;
@@ -25,8 +27,8 @@ Upcoming.prototype = {
   /**
    * Removes cards determined to be no longer worth learning at the moment.
    *
-   * @param   wordData  [Object]    A mapping of wordIds to wordData needed to analyze each word in upcoming.
-   * @return            [Array]     An array containing the wordIds of every el removed.
+   * @param   wordData  Object    A mapping of wordIds to wordData needed to analyze each word in upcoming.
+   * @return            Array     An array containing the wordIds of every el removed.
    */
   removeExpiredCards: function (wordData) {
     const expiredIds = [];
@@ -80,11 +82,26 @@ Upcoming.prototype = {
     }
     return { numAdded, updatedJlpt };
   },
+  /**
+   * Determines whether an incremented word should move within upcoming then shifts the element
+   * if necessary.  Returns new index of word or same index if word didn't shift.
+   *
+   * @param   incrementedIndex  Number  Index of word being incremented
+   * @param   wordData          Object  A mapping of wordIds to wordData needed to analyze each word in upcoming.
+   * @return                    Number  New index of word
+   */
+  processIncrement: function (incrementedIndex, wordData) {
+    return incrementedIndex;
+  },
   // Checks and returns if dailyNewCardLimit is fresh.  Also sets it to not be fresh.
   isLimitFresh: function () {
-    const isFresh = this.dailyNewCardLimit < 0;
-    if (isFresh) this.dailyNewCardLimit = Math.abs(this.dailyNewCardLimit);
+    isFresh = checkLimitFresh(this.dailyNewCardLimit);
+    if (isFresh) this.dailyNewCardLimit = markLimitNotFresh(this.dailyNewCardLimit);
     return isFresh;
+  },
+  // Returns index of word in upcoming arr, or undefined if it doesn't exist
+  getWordIndex: function (wordId) {
+    return this.words.find(el => el.wordId === wordId);
   },
   // Push a word to the end of the upcoming arr
   _addWord: function (wordId, wasAutofilled) {

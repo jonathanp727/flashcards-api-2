@@ -5,6 +5,7 @@ import CardHandler from './handlers/card';
 import StatsHandler from './handlers/stats';
 import UpcomingHandler from './handlers/upcoming';
 import HistoryHandler from './handlers/history';
+import { isActiveCard, isUpcomingCard } from './lib/card/auxiliary';
 
 /**
  * Increments the lookup counter of a word for a particular user and determines
@@ -49,23 +50,29 @@ async function increment(userId, wordId) {
   await WordModel.update(word._id, wordUpdateQuery);
 }
 
-// async function increment(userId, wordId) {
-//   const user = await UserModel.findById(userId);
-//   const word = await WordModel.findUserWord(userId, wordId);
-//   const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
+async function increment(userId, wordId, kindaKnew) {
+  const user = await UserModel.findById(userId);
+  const word = await WordModel.findUserWord(userId, wordId);
+  const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
 
-//   if (CardHandler.isCardAlready(word.card)) {
-//     CardHandler.increment(word.card, operations);
-//   } else {
-//     UpcomingHandler.checkShouldAddToUpcoming(word, user.upcoming, operations);
-//   }
+  StatsHandler.processIncrement(user, word, operations);
+  HistoryHandler.processIncrement(user, word, operations);
 
-//   StatsHandler.processIncrement(user.stats, word.stats, operations);
-//   HistoryHandler.processIncrement(operations);
+  if (isActiveCard(word.card)) {
+    CardHandler.processIncrement(word, kindaKnew, operations);
+  } else {
+    const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.words.map((el) => el.wordId));
+    if (isUpcomingCard(word.card)) {
+      UpcomingHandler.processIncrement(user, word, kindaKnew, operations);
+    } else {
+      UpcomingHandler.processShouldCreateCard(user, word, kindaKnew, operations);
+    }
+  }
 
-//   await UserModel.update(userId, operations.user);
-//   await WordModel.update(word._id, operations.word);
-// }
+  console.log(operations);
+  await UserModel.update(userId, operations.user);
+  await WordModel.update(word._id, operations.word);
+}
 
 /**
  * Gets all words in a dictionary that matches a query and updates user lookup history.
