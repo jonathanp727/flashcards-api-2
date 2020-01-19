@@ -5,36 +5,29 @@ import CardHandler from './handlers/card';
 import StatsHandler from './handlers/stats';
 import UpcomingHandler from './handlers/upcoming';
 import { getUpcomingLeftToday } from './lib/upcoming/auxiliary';
+import { isUpcomingCard } from './lib/card/auxiliary';
 import UpdateOperation from '../helpers/UpdateOperation';
 
 /**
  * Determines new interval for flashcard based on responseQuality (1-5).
  *
- * @param userId          ObjectId
- * @param wordId          ObjectId
- * @param upcoming        Boolean  True if card is in upcoming arr and not in cards arr
- * @param responseQuality Number (from 1 to 5)
+ * @param userId            ObjectId
+ * @param wordId            ObjectId
+ * @param responseQuality   Number    (from 1 to 5)
  * @return    { user, redo (boolean that states whether card needs to be redone)}
  */
-async function doCard(userId, wordId) {
+async function doCard(userId, wordId, responseQuality) {
   const user = await UserModel.findById(userId);
   const word = await WordModel.findUserWord(userId, wordId);
-  const isUpcoming = CardHandler.getIsUpcoming(word.card);
+  const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
 
-  const wordUpdateQuery = { $set: {} };
-  const userUpdateQuery = { $set: {} };
+  if (isUpcomingCard(word.card)) operations.user.addStatement('$pull', { 'upcoming.words': { wordId } });
 
-  wordUpdateQuery.$set.card = CardHandler.processCard(user.card);
-  const { userStats, wordStats } = StatsHandler.processDoCard(user.stats, word.stats);
-  wordUpdateQuery.$set.stats = wordStats;
-  userUpdateQuery.$set.stats = userStats;
+  CardHandler.processDoCard(word, responseQuality, operations);
+  StatsHandler.processDoCard(user, word, responseQuality, operations);
 
-  if (isUpcoming) {
-    userUpdateQuery.$pull = { upcoming: { wordId } };
-  }
-
-  await UserModel.update(userId, userUpdateQuery);
-  await WordModel.update(word._id, wordUpdateQuery);
+  await UserModel.update(userId, operations.user.generate());
+  await WordModel.update(userId, wordId, operations.word.generate());
 }
 
 /**

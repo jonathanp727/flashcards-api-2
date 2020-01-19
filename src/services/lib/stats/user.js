@@ -1,4 +1,4 @@
-import { isReponseCorrect } from '../card';
+import { isReponseCorrect } from '../card/auxiliary';
 import { NUM_CATEGORIES } from './auxiliary';
 
 function UserStats(other = null, jlptLevel) {
@@ -35,7 +35,7 @@ UserStats.prototype = {
 
       this.exp += calculateUserExpGains(newCategory);
 
-      const expNeeded = calculateExpToNextLevel(user.level);
+      const expNeeded = calculateExpToNextLevel(this.level);
       if (this.exp >= expNeeded) {
         this.level += 1;
         this.exp -= expNeeded;

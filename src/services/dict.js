@@ -11,12 +11,12 @@ import Word from './schema/word';
 
 /**
  * Increments the lookup counter of a word for a particular user and determines
- * if the word should be added to the "upcoming" flashcards array.
+ * if the word should be added to upcoming.
  *
  * @param userId     ObjectId
  * @param wordId     ObjectId
- * @param wordJlpt   { level: Number, index: Number }
- * @param kindaKnew  boolean   // Marks whether the user kind of knew the word or didn't at all
+ * @param wordJlpt   Object     { level: Number, index: Number }
+ * @param kindaKnew  Boolean    Marks whether the user kind of knew the word or didn't at all
  */
 async function increment(userId, wordId, kindaKnew, wordJlpt) {
   const user = await UserModel.findById(userId);

@@ -6,6 +6,13 @@ function processIncrement(word, kindaKnew, operations) {
   operations.word.addStatement('$set', { card: word.card });
 }
 
+function processDoCard(word, responseQuality, operations) {
+  word.card = new Card(word.card);
+  word.card.do(responseQuality);
+  operations.word.addStatement('$set', { card: word.card });
+}
+
 export default {
   processIncrement,
+  processDoCard,
 };

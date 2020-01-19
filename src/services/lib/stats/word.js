@@ -1,4 +1,5 @@
 import { NUM_CATEGORIES } from './auxiliary';
+import { isReponseCorrect } from '../card/auxiliary';
 
 function WordStats (other = null) {
   if (other) {
@@ -38,7 +39,7 @@ WordStats.prototype = {
     } else {
       this.exp = calculateWordExpGains(this.exp, response);
       this.card.curStreak += 1;
-      this.card.maxStreak = Math.max(this.curStreak, this.maxStreak);
+      this.card.maxStreak = Math.max(this.card.curStreak, this.card.maxStreak);
     }
   },
   processIncrement: function (kindaKnew) {

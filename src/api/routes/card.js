@@ -25,24 +25,25 @@ export default (app) => {
     },
   );
 
-  // route.post(
-  //   '/do',
-  //   celebrate({
-  //     [Segments.BODY]: Joi.object({
-  //       email: Joi.string().required(),
-  //       password: Joi.string().required(),
-  //     }),
-  //   }),
-  //   async (req, res, next) => {
-  //     Logger.debug('Calling Sign-In endpoint with body: %o', req.body)
-  //     try {
-  //       const { email, password } = req.body;
-  //       const { user, token } = await AuthService.signIn(email, password);
-  //       return res.json({ user, token }).status(200);
-  //     } catch (e) {
-  //       Logger.error('%o',  e );
-  //       return next(e);
-  //     }
-  //   },
-  // );
+  route.post(
+    '/do',
+    middlewares.isAuth,
+    celebrate({
+      [Segments.BODY]: Joi.object({
+        wordId: Joi.number().required(),
+        quality: Joi.number().required(),
+      }).required(),
+    }),
+    async (req, res, next) => {
+      Logger.debug('Calling Do-Card endpoint with body: %o', req.body);
+      try {
+        const { wordId, quality } = req.body;
+        await CardService.doCard(req.token._id, wordId, quality);
+        return res.json({ success: true }).status(200);
+      } catch (e) {
+        Logger.error('%o',  e );
+        return next(e);
+      }
+    },
+  );
 };

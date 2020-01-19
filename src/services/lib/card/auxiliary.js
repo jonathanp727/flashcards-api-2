@@ -7,3 +7,8 @@ export const isActiveCard = (card) => {
 export const isUpcomingCard = (card) => {
   return card !== null && card.date === null;
 }
+
+/** 
+ * Given a response value (1-5) returns whether the response indicates the user was correct.
+ */
+export const isReponseCorrect = response => response >= 3;

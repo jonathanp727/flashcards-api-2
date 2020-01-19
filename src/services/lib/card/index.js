@@ -1,8 +1,4 @@
-/** 
- * Given a response value (1-5) returns whether the response indicates the user was correct.  This is
- * only used once in this file, but is necessary for other parts of application.  (expLogic)
- */
-export const isReponseCorrect = response => response >= 3;
+import { isReponseCorrect } from './auxiliary';
 
 function Card (card = null, delayed = false) {
   if (card) {
@@ -29,7 +25,7 @@ function Card (card = null, delayed = false) {
 Card.prototype = {
   constructor: Card,
   // Processes card after it's done by user, returns whether user was correct or not (whether they should redo)
-  processInterval: function (response) {
+  do: function (response) {
     this.caution = false;
 
     const isCorrect = isReponseCorrect(response);
