@@ -69,13 +69,15 @@ function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operati
   const upcomingData = normalize(unordedUpcomingWords);
 
   const newIndex = user.upcoming.processIncrement(index, upcomingData);
-  // Create set statement
-  const updateStatement = {};
-  for (let i = newIndex; i <= index; i++) {
-    updateStatement[`upcoming.words.${i}`] = user.upcoming.words[i];
+
+  // Create set statement if word was shifted
+  if (index !== newIndex) {
+    const updateStatement = {};
+    for (let i = newIndex; i <= index; i++) {
+      updateStatement[`upcoming.words.${i}`] = user.upcoming.words[i];
+    }
+    operations.user.addStatement('$set', updateStatement);
   }
-  
-  operations.user.addStatement('$set', updateStatement);
 }
 
 /**
@@ -89,7 +91,23 @@ function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operati
  * @param   operations              Object  { user: UpdateOperation, word: UpdateOperation } 
  */
 function processShouldCreateCard(user, word, unorderedUpcomingWords, kindaKnew, operations) {
+  user.upcoming = new Upcoming(user.upcoming);
 
+  const upcomingData = normalize(unorderedUpcomingWords);
+
+  const { newIndex, straightToCard } = user.upcoming.shouldCreateCard(word, upcomingData, kindaKnew, user.stats.jlpt);
+  if (straightToCard) {
+    word.card = new Card(null, true);
+    operations.word.addStatement('$set', { card: word.card });
+  } else if (newIndex !== -1) {
+    const updateStatement = {};
+    for (let i = newIndex; i < user.upcoming.words.length; i++) {
+      updateStatement[`upcoming.words.${i}`] = user.upcoming.words[i];
+    }
+    operations.user.addStatement('$set', updateStatement);
+    word.card = new Card(null);
+    operations.word.addStatement('$set', { card: word.card });
+  }
 }
 
 function normalize(words) {

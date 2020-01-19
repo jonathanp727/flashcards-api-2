@@ -25,4 +25,29 @@ export default (app) => {
       }
     },
   );
+
+  route.post(
+    '/inc',
+    middlewares.isAuth,
+    celebrate({
+      [Segments.BODY]: Joi.object({
+        wordId: Joi.number().required(),
+        kindaKnew: Joi.boolean().required(),
+        jlpt: Joi.object({
+          level: Joi.number().required(),
+          index: Joi.number().required(),
+        }).required(),
+      }),
+    }),
+    async (req, res, next) => {
+      Logger.debug('Calling Increment endpoint with body: ', req.body);
+      try {
+        await DictService.increment(req.token._id, req.body.wordId, req.body.kindaKnew, req.body.jlpt);
+        return res.status(200).json({ success: true });
+      } catch (e) {
+        Logger.error('%o', e);
+        return next(e);
+      }
+    },
+  );
 };

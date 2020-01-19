@@ -4,7 +4,7 @@
  */
 export const isReponseCorrect = response => response >= 3;
 
-function Card (card = null) {
+function Card (card = null, delayed = false) {
   if (card) {
     this.ef = card.ef;
     this.n = card.n;
@@ -15,8 +15,14 @@ function Card (card = null) {
     // deck, reset card regardless of kindaKnew.
     this.caution = card.caution;
   } else {
-    this.date = null;
-    this._reset();
+    // Creating a card with delayed set to true creates a card that appears x days 
+    // in the future instead of right away
+    if (delayed) {
+      this._softReset();
+    } else {
+      this.date = null;
+      this._reset();
+    }
   }
 }
 

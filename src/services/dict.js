@@ -6,6 +6,8 @@ import StatsHandler from './handlers/stats';
 import UpcomingHandler from './handlers/upcoming';
 import HistoryHandler from './handlers/history';
 import { isActiveCard, isUpcomingCard } from './lib/card/auxiliary';
+import UpdateOperation from '../helpers/UpdateOperation';
+import Word from './schema/word';
 
 /**
  * Increments the lookup counter of a word for a particular user and determines
@@ -16,46 +18,20 @@ import { isActiveCard, isUpcomingCard } from './lib/card/auxiliary';
  * @param wordJlpt   { level: Number, index: Number }
  * @param kindaKnew  boolean   // Marks whether the user kind of knew the word or didn't at all
  */
-async function increment(userId, wordId) {
-  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
-  // ^ for pushing to user recent lookups
-
+async function increment(userId, wordId, kindaKnew, wordJlpt) {
   const user = await UserModel.findById(userId);
-  const word = await WordModel.findUserWord(userId, wordId);
-
-  const userUpdateQuery = {};
-  const wordUpdateQuery = {};
-  if (CardHandler.isCardAlready(word.card)) {
-    const wasMovedFromUpcoming = CardHandler.increment(word.card);
-    if (wasMovedFromUpcoming) {
-      userUpdateQuery.$pull = { upcoming: { wordId } };
-    }
-  } else {
-    const { shouldAdd, index, element } = UpcomingHandler.checkShouldAddToUpcoming(word, user.upcoming);
-    if (shouldAdd) {
-      userUpdateQuery.$push = {
-        upcoming: {
-          $each: [element],
-          $position: index,
-        },
-      };
-    }
-  }
-
-  const { userStats, wordStats } = StatsHandler.processIncrement(user.stats, word.stats);
-  wordUpdateQuery.$set.stats = wordStats;
-  userUpdateQuery.$set.stats = userStats;
-
-  await UserModel.update(userId, userUpdateQuery);
-  await WordModel.update(word._id, wordUpdateQuery);
-}
-
-async function increment(userId, wordId, kindaKnew) {
-  const user = await UserModel.findById(userId);
-  const word = await WordModel.findUserWord(userId, wordId);
+  let word = await WordModel.findUserWord(userId, wordId);
   const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
 
+  let isInsertOp = false;
+  if (!word) {
+    word = new Word({ userId, wordId, jlpt: wordJlpt });
+    isInsertOp = true;
+  }
+
   StatsHandler.processIncrement(user, word, operations);
+  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
+  // ^ for pushing to user recent lookups
   HistoryHandler.processIncrement(user, word, operations);
 
   if (isActiveCard(word.card)) {
@@ -63,15 +39,18 @@ async function increment(userId, wordId, kindaKnew) {
   } else {
     const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.words.map((el) => el.wordId));
     if (isUpcomingCard(word.card)) {
-      UpcomingHandler.processIncrement(user, word, kindaKnew, operations);
+      UpcomingHandler.processIncrement(user, word, unordedUpcomingWords, kindaKnew, operations);
     } else {
-      UpcomingHandler.processShouldCreateCard(user, word, kindaKnew, operations);
+      UpcomingHandler.processShouldCreateCard(user, word, unordedUpcomingWords, kindaKnew, operations);
     }
   }
 
-  console.log(operations);
-  await UserModel.update(userId, operations.user);
-  await WordModel.update(word._id, operations.word);
+  await UserModel.update(userId, operations.user.generate());
+  if (isInsertOp) {
+    word.prepareForDb();
+    await WordModel.create(word);
+  }
+  else await WordModel.update(word._id, operations.word.generate());
 }
 
 /**

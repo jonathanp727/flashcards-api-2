@@ -1,24 +1,28 @@
 function UpdateOperation () {
-  // empty at first
+  this.operation = {};
 }
 
 UpdateOperation.prototype = {
-  constructor: null,
+  constructor: UpdateOperation,
   addStatement: function(operator, data) {
-    if (this.hasOwnProperty(operator)) {
+    if (this.operation.hasOwnProperty(operator)) {
 
       // Do check to make sure we aren't overriding any data
       for (el in data) {
-        if (this[operator].hasOwnProperty(el)) {
+        if (this.operation[operator].hasOwnProperty(el)) {
           throw new Error('Attempted to override update statement');
         }
       }
 
-      this[operator] = { ...this[operator] , ...data };
+      this.operation[operator] = { ...this.operation[operator] , ...data };
     } else {
-      this[operator] = data;
+      this.operation[operator] = data;
     }
   },
+  // Return the full operation to be passed into Mongo
+  generate: function() {
+    return this.operation;
+  }
 }
 
 export default UpdateOperation;

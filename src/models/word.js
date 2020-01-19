@@ -15,11 +15,7 @@ const findUserWords = (userId, wordIds) => {
 
   return db.collection(WORD).find({
     userId: ObjectId(userId),
-    wordId: {
-      $in: [
-        wordIds.map(wordId => ObjectId(wordId)),
-      ],
-    },
+    wordId: { $in: wordIds },
   }).toArray();
 }
 const findTodaysCards = (userId) => {
@@ -37,11 +33,7 @@ const update = (userId, wordId, query) => db.collection(WORD).update({
 }, query);
 const updateMany = (userId, wordIds, query) => db.collection(WORD).updateMany({
   userId: ObjectId(userId),
-  wordId: {
-    $in: [
-      wordIds.map(wordId => ObjectId(wordId)),
-    ],
-  },
+  wordId: { $in: wordIds },
 }, query);
 
 export default {
