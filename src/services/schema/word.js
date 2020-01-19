@@ -20,7 +20,7 @@ Word.prototype = {
   // Function to be called before saving a User to db.  Transforms all data
   // to necessary formats as stored in db
   prepareForDb: function () {
-    this.userId = ObjectId(userId);
+    this.userId = ObjectId(this.userId);
   }
 }
 

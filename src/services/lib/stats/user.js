@@ -6,6 +6,7 @@ function UserStats(other = null, jlptLevel) {
     this.categories = other.categories;
     this.exp = other.exp;
     this.level = other.level;
+    this.jlpt = other.jlpt;
   } else {
     // Count of all words in each category
     this.jlpt = { level: jlptLevel, index: 0 };
@@ -25,7 +26,7 @@ UserStats.prototype = {
    * To be called whenever a word has it's exp modified.  If the word has a change in category
    * then calculates new user exp
    */
-  processWordDif: function (prevCategory, newCategory) {
+  processWordDiff: function (prevCategory, newCategory) {
     if (prevCategory === newCategory) return;
     this.categories[prevCategory] -= 1;
     this.categories[newCategory] += 1;

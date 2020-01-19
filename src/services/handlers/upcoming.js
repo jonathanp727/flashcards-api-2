@@ -66,7 +66,7 @@ function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operati
   user.upcoming = new Upcoming(user.upcoming);
 
   const index = user.upcoming.getWordIndex(word._id);
-  const upcomingData = normalize(unordedUpcomingWords);
+  const upcomingData = normalize(unorderedUpcomingWords);
 
   const newIndex = user.upcoming.processIncrement(index, upcomingData);
 

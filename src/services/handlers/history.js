@@ -7,7 +7,9 @@
  * @param   operations    { user: UpdateOperation, word: UpdateOperation } 
  */
 function processIncrement(user, word, operations) {
-
+  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
+  // ^ for pushing to user recent lookups
+  operations.user.addStatement('$push', { 'history.recentLookups': { $each: [word.wordId], $slice: -10 } });
 }
 
 export default {

@@ -29,9 +29,7 @@ async function increment(userId, wordId, kindaKnew, wordJlpt) {
     isInsertOp = true;
   }
 
-  StatsHandler.processIncrement(user, word, operations);
-  // https://stackoverflow.com/questions/29932723/how-to-limit-an-array-size-in-mongodb
-  // ^ for pushing to user recent lookups
+  StatsHandler.processIncrement(user, word, kindaKnew, operations);
   HistoryHandler.processIncrement(user, word, operations);
 
   if (isActiveCard(word.card)) {
@@ -50,7 +48,7 @@ async function increment(userId, wordId, kindaKnew, wordJlpt) {
     word.prepareForDb();
     await WordModel.create(word);
   }
-  else await WordModel.update(word._id, operations.word.generate());
+  else await WordModel.update(userId, wordId, operations.word.generate());
 }
 
 /**

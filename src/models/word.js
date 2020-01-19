@@ -8,7 +8,7 @@ const create = (schema) => db.collection(WORD).insertOne(schema).then(res => res
 const createMany = (schemas) => db.collection(WORD).insertMany(schemas);
 const findUserWord = (userId, wordId) => db.collection(WORD).findOne({
   userId: ObjectId(userId),
-  wordId: ObjectId(wordId),
+  wordId: wordId,
 });
 const findUserWords = (userId, wordIds) => {
   if (wordIds.length === 0) return [];
@@ -27,9 +27,9 @@ const findTodaysCards = (userId) => {
     'card.date': today,
   }).toArray();
 }
-const update = (userId, wordId, query) => db.collection(WORD).update({
+const update = (userId, wordId, query) => db.collection(WORD).updateOne({
   userId: ObjectId(userId),
-  wordId: ObjectId(wordId),
+  wordId: wordId,
 }, query);
 const updateMany = (userId, wordIds, query) => db.collection(WORD).updateMany({
   userId: ObjectId(userId),

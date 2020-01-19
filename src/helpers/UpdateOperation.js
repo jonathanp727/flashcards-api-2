@@ -8,7 +8,7 @@ UpdateOperation.prototype = {
     if (this.operation.hasOwnProperty(operator)) {
 
       // Do check to make sure we aren't overriding any data
-      for (el in data) {
+      for (const el in data) {
         if (this.operation[operator].hasOwnProperty(el)) {
           throw new Error('Attempted to override update statement');
         }
