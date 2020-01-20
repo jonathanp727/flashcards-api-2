@@ -38,8 +38,8 @@ export default (app) => {
       Logger.debug('Calling Do-Card endpoint with body: %o', req.body);
       try {
         const { wordId, quality } = req.body;
-        await CardService.doCard(req.token._id, wordId, quality);
-        return res.json({ success: true }).status(200);
+        const redo = await CardService.doCard(req.token._id, wordId, quality);
+        return res.json({ redo }).status(200);
       } catch (e) {
         Logger.error('%o',  e );
         return next(e);

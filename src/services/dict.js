@@ -49,6 +49,8 @@ async function increment(userId, wordId, kindaKnew, wordJlpt) {
     await WordModel.create(word);
   }
   else await WordModel.update(userId, wordId, operations.word.generate());
+
+  return word;
 }
 
 /**

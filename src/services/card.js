@@ -5,7 +5,7 @@ import CardHandler from './handlers/card';
 import StatsHandler from './handlers/stats';
 import UpcomingHandler from './handlers/upcoming';
 import { getUpcomingLeftToday } from './lib/upcoming/auxiliary';
-import { isUpcomingCard } from './lib/card/auxiliary';
+import { isUpcomingCard, isReponseCorrect } from './lib/card/auxiliary';
 import UpdateOperation from '../helpers/UpdateOperation';
 
 /**
@@ -14,7 +14,8 @@ import UpdateOperation from '../helpers/UpdateOperation';
  * @param userId            ObjectId
  * @param wordId            ObjectId
  * @param responseQuality   Number    (from 1 to 5)
- * @return    { user, redo (boolean that states whether card needs to be redone)}
+ * @return                  Boolean   Returns whether or not the card was answered incorrectly and
+ *                                    needs to be redone.  (i.e. True -> must redo card)
  */
 async function doCard(userId, wordId, responseQuality) {
   const user = await UserModel.findById(userId);
@@ -28,6 +29,8 @@ async function doCard(userId, wordId, responseQuality) {
 
   await UserModel.update(userId, operations.user.generate());
   await WordModel.update(userId, wordId, operations.word.generate());
+
+  return !isReponseCorrect(responseQuality);
 }
 
 /**

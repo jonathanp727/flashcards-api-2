@@ -43,7 +43,7 @@ async function signIn(email, password) {
   if (!user) {
     throw new Error('User not registered');
   }
-  const validPassword = await argon2.verify(user.password, password);
+  const validPassword = await argon2.verify(user.general.passwordHash, password);
   if (validPassword) {
     const token = generateToken(user);
     Reflect.deleteProperty(user, 'password');

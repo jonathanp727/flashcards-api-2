@@ -42,8 +42,8 @@ export default (app) => {
     async (req, res, next) => {
       Logger.debug('Calling Increment endpoint with body: ', req.body);
       try {
-        await DictService.increment(req.token._id, req.body.wordId, req.body.kindaKnew, req.body.jlpt);
-        return res.status(200).json({ success: true });
+        const updatedWord = await DictService.increment(req.token._id, req.body.wordId, req.body.kindaKnew, req.body.jlpt);
+        return res.status(200).json({ updatedWord });
       } catch (e) {
         Logger.error('%o', e);
         return next(e);
