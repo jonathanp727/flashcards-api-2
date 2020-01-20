@@ -1,6 +1,6 @@
 // Takes two dates and determines if they are the same day or not
 // If only one date is provided, determines if that date is today
-export const isSameDay = (d1, d2 = undefined) => {
+export const isSameDay = (d1, d2 = new Date()) => {
   if (!(d1 instanceof Date)) {
     d1 = new Date(d1);
   }

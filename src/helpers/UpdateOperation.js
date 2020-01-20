@@ -1,10 +1,12 @@
 function UpdateOperation () {
   this.operation = {};
+  this.dirty = false;
 }
 
 UpdateOperation.prototype = {
   constructor: UpdateOperation,
   addStatement: function(operator, data) {
+    this.dirty = true;
     if (this.operation.hasOwnProperty(operator)) {
 
       // Do check to make sure we aren't overriding any data
@@ -22,7 +24,10 @@ UpdateOperation.prototype = {
   // Return the full operation to be passed into Mongo
   generate: function() {
     return this.operation;
-  }
+  },
+  isDirty: function() {
+    return this.dirty;
+  },
 }
 
 export default UpdateOperation;

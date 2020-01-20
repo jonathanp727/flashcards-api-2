@@ -1,5 +1,3 @@
-import { isSameDay } from '../../../helpers/date';
-
 // A freshly updated new limit will be set to negative to let autofill know to run again
 // in the case that it has already been run today.
 export const updateDailyNewCardLimit = (newLimit) => {
@@ -19,12 +17,10 @@ export const markLimitNotFresh = (newLimit) => {
 /** 
  * Returns the number of new cards left for a user to start today
  *
- * @param lastSession       Object  { date: Date, upcomingCardsDone: Number }
+ * @param upcomingCardsDone Number  How many upcoming have been done already today
  * @param dailyNewCardLimit Number
  * @return                  Number
  */
-export const getUpcomingLeftToday = (lastSession, dailyNewCardLimit) => {
-  return isSameDay(lastSession.date) ?
-      Math.abs(dailyNewCardLimit) - lastSession.upcomingCardsDone :
-      Math.abs(dailyNewCardLimit);
+export const getUpcomingLeftToday = (dailyNewCardLimit, upcomingCardsDone) => {
+  return Math.abs(dailyNewCardLimit) - upcomingCardsDone;
 }

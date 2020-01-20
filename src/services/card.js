@@ -4,6 +4,7 @@ import DictModel from '../models/dict';
 import CardHandler from './handlers/card';
 import StatsHandler from './handlers/stats';
 import UpcomingHandler from './handlers/upcoming';
+import HistoryHandler from './handlers/history';
 import { getUpcomingLeftToday } from './lib/upcoming/auxiliary';
 import { isUpcomingCard, isReponseCorrect } from './lib/card/auxiliary';
 import UpdateOperation from '../helpers/UpdateOperation';
@@ -22,7 +23,10 @@ async function doCard(userId, wordId, responseQuality) {
   const word = await WordModel.findUserWord(userId, wordId);
   const operations = { user: new UpdateOperation(), word: new UpdateOperation() };
 
-  if (isUpcomingCard(word.card)) operations.user.addStatement('$pull', { 'upcoming.words': { wordId } });
+  if (isUpcomingCard(word.card)) {
+    operations.user.addStatement('$pull', { 'upcoming.words': { wordId } });
+    HistoryHandler.incTodaysUpcomingCount(operations);
+  }
 
   CardHandler.processDoCard(word, responseQuality, operations);
   StatsHandler.processDoCard(user, word, responseQuality, operations);
@@ -42,8 +46,10 @@ async function doCard(userId, wordId, responseQuality) {
  */
 async function startCardSession(userId) {
   const user = await UserModel.findById(userId);
+  const operations = { user: new UpdateOperation() };
 
-  const numUpcomingLeftToday = getUpcomingLeftToday(user.history.lastSession, user.upcoming.dailyNewCardLimit);
+  const upcomingDoneToday = HistoryHandler.processSessionStart(user, operations);
+  const numUpcomingLeftToday = getUpcomingLeftToday(user.upcoming.dailyNewCardLimit, upcomingDoneToday);
 
   let upcomingEntries = [];
   if (numUpcomingLeftToday > 0) {
@@ -55,6 +61,10 @@ async function startCardSession(userId) {
 
   const cardsToDo = await WordModel.findTodaysCards(userId);
   const inProgEntries = await DictModel.findByIds(cardsToDo.map((el) => el.wordId));
+
+  if (operations.user.isDirty()) {
+    await UserModel.update(userId, operations.user.generate());
+  }
 
   return { upcoming: upcomingEntries, inProg: inProgEntries };
 }

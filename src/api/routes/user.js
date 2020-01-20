@@ -17,6 +17,7 @@ export default (app) => {
       Logger.debug('Calling User GET endpoint');
       try {
         const result = await UserService.get(req.token._id);
+        if (!result) return res.status(401).end();
         return res.status(200).json({ user: result });
       } catch (e) {
         Logger.error('%o', e);
