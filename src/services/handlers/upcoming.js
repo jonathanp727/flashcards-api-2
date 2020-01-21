@@ -27,7 +27,7 @@ async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLef
 
   const expiredIds = user.upcoming.removeExpiredCards(upcomingData);
   if (expiredIds.length > 0) {
-    await UserModel.update(user._id, { $pull: { 'upcoming.wordId': { $in: wordIds } } });
+    await UserModel.update(user._id, { $pull: { 'upcoming.words': { wordId: { $in: wordIds } } } });
     await WordModel.updateMany(user._id, wordIds, { $set: { card: null } });
   }
 
@@ -64,6 +64,15 @@ async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLef
  */
 function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operations) {
   user.upcoming = new Upcoming(user.upcoming);
+  console.log('l')
+  if (kindaKnew) {
+    console.log('ol')
+    operations.user.addStatement('$pull', { 'upcoming.words': { wordId: word.wordId } });
+    word.card = new Card(word.card);
+    word.card.increment(kindaKnew);
+    operations.word.addStatement('$set', { card: word.card });
+    return;
+  }
 
   const index = user.upcoming.getWordIndex(word._id);
   const upcomingData = normalize(unorderedUpcomingWords);

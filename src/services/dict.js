@@ -43,6 +43,8 @@ async function increment(userId, wordId, kindaKnew, wordJlpt) {
     }
   }
 
+  console.log(operations);
+
   await UserModel.update(userId, operations.user.generate());
   if (isInsertOp) {
     word.prepareForDb();

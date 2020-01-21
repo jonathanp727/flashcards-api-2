@@ -57,6 +57,7 @@ async function startCardSession(userId) {
 
     const todaysUpcoming = await UpcomingHandler.doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLeftToday);
     upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
+    upcomingEntries = sortEntries(todaysUpcoming, upcomingEntries);
   }
 
   const cardsToDo = await WordModel.findTodaysCards(userId);
@@ -67,6 +68,14 @@ async function startCardSession(userId) {
   }
 
   return { upcoming: upcomingEntries, inProg: inProgEntries };
+}
+
+function sortEntries(order, entries) {
+  const d = {};
+  entries.forEach((el) => d[el._id] = el);
+  const sorted = [];
+  order.forEach(({ wordId }) => sorted.push(d[wordId]));
+  return sorted;
 }
 
 export default {
