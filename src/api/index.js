@@ -10,4 +10,8 @@ card(app);
 dict(app);
 user(app);
 
+app.get('/', (req, res, next) => {
+  res.json({ success: true });
+});
+
 export default app;
