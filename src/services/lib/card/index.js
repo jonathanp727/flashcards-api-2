@@ -68,7 +68,9 @@ Card.prototype = {
     this.caution = false;
   },
   _softReset: function (lowerEF = false) {
-    this.interval = 7;
+    if (this.interval && this.interval > 7 || !this.interval) {
+      this.interval = 7;
+    }
     this.date = getDateWithInterval(this.interval);
     this.n = 3;
     this.caution = true;

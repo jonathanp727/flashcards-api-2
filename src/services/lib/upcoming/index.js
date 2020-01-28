@@ -147,6 +147,9 @@ Upcoming.prototype = {
     }
 
     this.words.splice(i, 0, new UpcomingEl(wordId, wasAutofilled, priority));
+    if (this._isFull()) {
+      this.pop();
+    }
     return i;
   },
   _isFull: function () {
