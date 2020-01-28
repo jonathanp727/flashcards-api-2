@@ -34,7 +34,7 @@ const calculateWordDidntKnowIncrement = exp => 0;
 WordStats.prototype = {
   constructor: WordStats,
   processDoCard: function (response) {
-    this.card.history.push({ date: moment().valueOf(), response });
+    this.card.history.push({ date: moment().startOf('day').valueOf(), response });
     if (!isReponseCorrect(response)) {
       this.exp = calculateWordExpLosses(this.exp, response);
       this.card.curStreak = 0;
@@ -46,7 +46,7 @@ WordStats.prototype = {
   },
   processIncrement: function (kindaKnew) {
     this.curStreak = 0;
-    this.inc.dates.push({ date: moment().valueOf(), kindaKnew });
+    this.inc.dates.push({ date: moment().startOf('day').valueOf(), kindaKnew });
     this.inc.count += 1;
     if (kindaKnew) {
       this.exp = calculateWordKindaKnewIncrement(this.exp);

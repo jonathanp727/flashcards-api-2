@@ -64,9 +64,7 @@ async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLef
  */
 function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operations) {
   user.upcoming = new Upcoming(user.upcoming);
-  console.log('l')
   if (kindaKnew) {
-    console.log('ol')
     operations.user.addStatement('$pull', { 'upcoming.words': { wordId: word.wordId } });
     word.card = new Card(word.card);
     word.card.increment(kindaKnew);
@@ -74,10 +72,10 @@ function processIncrement(user, word, unorderedUpcomingWords, kindaKnew, operati
     return;
   }
 
-  const index = user.upcoming.getWordIndex(word._id);
+  const index = user.upcoming.getWordIndex(word.wordId);
   const upcomingData = normalize(unorderedUpcomingWords);
 
-  const newIndex = user.upcoming.processIncrement(index, upcomingData);
+  const newIndex = user.upcoming.processIncrement(index, word, user.stats.jlpt);
 
   // Create set statement if word was shifted
   if (index !== newIndex) {

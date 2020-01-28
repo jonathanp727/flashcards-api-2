@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 import DictModel from '../../../models/dict';
 import WordModel from '../../../models/word';
 
@@ -17,9 +19,10 @@ function Upcoming(upcoming) {
   }
 }
 
-function UpcomingEl(wordId, wasAutofilled) {
+function UpcomingEl(wordId, wasAutofilled, priority) {
   this.wordId = wordId;
   this.wasAutofilled = wasAutofilled;
+  this.priority = priority;
 }
 
 Upcoming.prototype = {
@@ -71,12 +74,12 @@ Upcoming.prototype = {
         // -- TODO: Properly handle this by switching resources --
         break;
       }
-      const userWord = await WordModel.findUserWord(userId, word._id);
+      const userWord = await WordModel.findUserWord(userId, word.wordId);
       if (!userWord || !userWord.card) {
-        this._addWord(word._id, true);
+        this._addWord(word.wordId, true);
         numAdded += 1;
-        if (userWord) addCardToWord(word._id);
-        else createWord(word._id, word.jlpt);
+        if (userWord) addCardToWord(word.wordId);
+        else createWord(word.wordId, word.jlpt);
       }
       updatedJlpt = { level: word.jlpt.level, index: word.jlpt.index + 1 };
     }
@@ -87,11 +90,16 @@ Upcoming.prototype = {
    * if necessary.  Returns new index of word or same index if word didn't shift.
    *
    * @param   incrementedIndex  Number  Index of word being incremented.
-   * @param   wordData          Object  A mapping of wordIds to wordData needed to analyze each word in upcoming.
+   * @param   word              Word
    * @return                    Number  The new index of the word or the same index if it didn't shift.
    */
-  processIncrement: function (incrementedIndex, wordData) {
-    return incrementedIndex;
+  processIncrement: function (incrementedIndex, word, userJlpt) {
+    const newPrio = calcPriority(userJlpt.level, word.jlpt.level, word.stats.inc.dates);
+    if (incrementedIndex === 0 || newPrio <= this.words[incrementedIndex - 1].priority) return incrementedIndex;
+
+    // @TODO: Make this more efficient
+    this.words.splice(incrementedIndex, 1);
+    return this._addWord(word.wordId, false, newPrio);
   },
   /**
    * Determines whether an incremented word that does not have a card should be placed in upcoming
@@ -107,10 +115,11 @@ Upcoming.prototype = {
     if (kindaKnew) {
       return { newIndex: -1, straightToCard: true };
     } else if(!this._isFull()) {
-      // if word jlpt is at or above the user's level, OR it's at the next level
-      if (word.jlpt.level >= userJlpt.level || word.stats.inc.count > 3) {
-        this._addWord(word.wordId, false);
-        return { newIndex: this.words.length - 1, straightToCard: false };
+      const priority = calcPriority(userJlpt.level, word.jlpt.level, word.stats.inc.dates);
+
+      if (this._sufficientPriority(priority)) {
+        const newIndex = this._addWord(word.wordId, false, priority);
+        return { newIndex, straightToCard: false };
       }
     }
     return { newIndex: -1, straightToCard: false };
@@ -123,18 +132,31 @@ Upcoming.prototype = {
   },
   // Returns index of word in upcoming arr, or undefined if it doesn't exist
   getWordIndex: function (wordId) {
-    return this.words.find(el => el.wordId === wordId);
+    return this.words.findIndex(el => el.wordId === wordId);
   },
-  // Push a word to the end of the upcoming arr
-  _addWord: function (wordId, wasAutofilled) {
+  // Add word to upcoming based on priority 
+  _addWord: function (wordId, wasAutofilled, priority) {
     if (this._isFull()) {
       throw new Error('Attempted to push to a full Upcoming object');
     }
-    this.words.push(new UpcomingEl(wordId, wasAutofilled));
+
+    // @TODO: Change position search to binary
+    let i = 0;
+    while(i < this.words.length && priority < this.words[i].priority) {
+      i += 1;
+    }
+
+    this.words.splice(i, 0, new UpcomingEl(wordId, wasAutofilled, priority));
+    return i;
   },
   _isFull: function () {
     return this.words.length >= this.dailyNewCardLimit * UPCOMING_CAPACITY_MULTIPLIER;
-  }
+  },
+  _sufficientPriority: function (priority) {
+    let isHigherThanMinEl = true;
+    if (this._isFull()) isHigherThanMinEl = priority >= this.words[this.words.length - 1].priority
+    return priority > 0 && isHigherThanMinEl;
+  },
 }
 
 const JLPT_DIFF_MULTIPLIER = 4; //x
@@ -142,11 +164,14 @@ const DAYS_SINCE_INC_MULTIPLIER = 2; //y
 const DAYS_SINCE_INC_RANGE = 3; //z
 const DAYS_SINCE_INC_INVERSE_ADDITION = 2; //w
 const calcPriority = (userJlpt, wordJlpt, incrementDates, autofillPolicy) => {
-  const jlptTerm = JLPT_DIFF_MULTIPLIER * Math.min(userJlpt - wordJlpt, 0);
-  const today = new Date();
+  const jlptTerm = JLPT_DIFF_MULTIPLIER * Math.max((wordJlpt - userJlpt) + 1, 0);
+  const today = moment();
   const incTerm = incrementDates.reduce((acc, cur) => {
-
-  });
+    const daysSince = today.diff(cur.date, 'days');
+    return acc + DAYS_SINCE_INC_MULTIPLIER / ((daysSince / DAYS_SINCE_INC_RANGE) + DAYS_SINCE_INC_INVERSE_ADDITION);
+  }, 0);
+  console.log(jlptTerm + incTerm);
+  return jlptTerm + incTerm;
 }
 
 export default Upcoming;

@@ -88,31 +88,4 @@ function getDateWithInterval(interval) {
   return d.valueOf();
 }
 
-/**
- * Calculation to determine whether a lookup should translate into a new card
- *
- * @param user      [Object]
- * @param word      [Object]
- * @param wordJlpt  [Object]
- * @param kindaKnew boolean
- * @return [Object]
- *    newCard: [Object] // The card to be created or null if card should not be created
- *    isNew: boolean // Whether the card is a fresh new card or if it has parematers set to perform
- *                   // differently or show up on a specific date, 
- */
-export const shouldCreateCard = (userJlpt, word, wordJlpt, kindaKnew) => {
-  if (kindaKnew) {
-     // Return a card that is set to be done in 7 days
-    const newCard = new Card();
-    newCard._softReset();
-    return { newCard, isNew: false };
-  } else {
-    // if word jlpt is at or above the user's level, OR it's at the next level
-    if (wordJlpt >= userJlpt.level || word.count > 3) {
-      return { newCard: new Card(), isNew: true };
-    }
-    return { newCard: null };
-  }
-};
-
 export default Card;
