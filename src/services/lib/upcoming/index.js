@@ -137,4 +137,16 @@ Upcoming.prototype = {
   }
 }
 
+const JLPT_DIFF_MULTIPLIER = 4; //x
+const DAYS_SINCE_INC_MULTIPLIER = 2; //y
+const DAYS_SINCE_INC_RANGE = 3; //z
+const DAYS_SINCE_INC_INVERSE_ADDITION = 2; //w
+const calcPriority = (userJlpt, wordJlpt, incrementDates, autofillPolicy) => {
+  const jlptTerm = JLPT_DIFF_MULTIPLIER * Math.min(userJlpt - wordJlpt, 0);
+  const today = new Date();
+  const incTerm = incrementDates.reduce((acc, cur) => {
+
+  });
+}
+
 export default Upcoming;

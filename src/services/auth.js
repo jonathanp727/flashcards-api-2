@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
 import { randomBytes } from 'crypto';
+import moment from 'moment';
 
 import config from '../config';
 import logger from '../loaders/logger';
@@ -55,14 +56,13 @@ async function signIn(email, password) {
 }
 
 function generateToken(user) {
-  const today = new Date();
-  const exp = new Date(today);
-  exp.setDate(today.getDate() + 60);
+  const exp = moment();
+  exp.add(60, 'days');
   return jwt.sign(
     {
       _id: user._id,           // Used in `isAuth` middleware
       name: user.name,
-      exp: exp.getTime() / 1000,
+      exp: exp.unix(),
     },
     config.jwtSecret,
   );

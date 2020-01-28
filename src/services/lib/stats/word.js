@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 import { NUM_CATEGORIES } from './auxiliary';
 import { isReponseCorrect } from '../card/auxiliary';
 
@@ -32,7 +34,7 @@ const calculateWordDidntKnowIncrement = exp => 0;
 WordStats.prototype = {
   constructor: WordStats,
   processDoCard: function (response) {
-    this.card.history.push({ date: new Date().getTime(), response });
+    this.card.history.push({ date: moment().valueOf(), response });
     if (!isReponseCorrect(response)) {
       this.exp = calculateWordExpLosses(this.exp, response);
       this.card.curStreak = 0;
@@ -44,7 +46,7 @@ WordStats.prototype = {
   },
   processIncrement: function (kindaKnew) {
     this.curStreak = 0;
-    this.inc.dates.push({ date: new Date().getTime(), kindaKnew });
+    this.inc.dates.push({ date: moment().valueOf(), kindaKnew });
     this.inc.count += 1;
     if (kindaKnew) {
       this.exp = calculateWordKindaKnewIncrement(this.exp);
