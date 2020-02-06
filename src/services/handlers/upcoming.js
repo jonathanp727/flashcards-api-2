@@ -49,7 +49,7 @@ async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLef
     await UserModel.update(user._id, { $set: { 'stats.jlpt': updatedJlpt }, $push: { 'upcoming.words': { $each: user.upcoming.words.slice(-1 * numAdded) } } });
   }
 
-  return user.upcoming.words.slice(0, user.settings.dailyNewCardLimit);
+  return user.upcoming.words.slice(0, numUpcomingLeftToday);
 }
 
 /**

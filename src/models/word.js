@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import moment from 'moment';
 
 import { db, client } from '../loaders/mongo';
 
@@ -19,12 +20,12 @@ const findUserWords = (userId, wordIds) => {
   }).toArray();
 }
 const findTodaysCards = (userId) => {
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = moment();
+  today.startOf('day');
 
   return db.collection(WORD).find({
     userId: ObjectId(userId),
-    'card.date': today,
+    'card.date': today.valueOf(),
   }).toArray();
 }
 const update = (userId, wordId, query) => db.collection(WORD).updateOne({

@@ -68,18 +68,19 @@ Upcoming.prototype = {
     let numAdded = 0;
     while (this.words.length < this.dailyNewCardLimit) {
       const word = await cursor.next();
+      console.log(word);
       if (!word) {
         // Reached end of current resource
 
         // -- TODO: Properly handle this by switching resources --
         break;
       }
-      const userWord = await WordModel.findUserWord(userId, word.wordId);
+      const userWord = await WordModel.findUserWord(userId, word._id);
       if (!userWord || !userWord.card) {
-        this._addWord(word.wordId, true);
+        this._addWord(word._id, true, calcPriority(userJlpt.level, userJlpt.level));
         numAdded += 1;
-        if (userWord) addCardToWord(word.wordId);
-        else createWord(word.wordId, word.jlpt);
+        if (userWord) addCardToWord(word._id);
+        else createWord(word._id, word.jlpt);
       }
       updatedJlpt = { level: word.jlpt.level, index: word.jlpt.index + 1 };
     }
@@ -166,14 +167,13 @@ const JLPT_DIFF_MULTIPLIER = 4; //x
 const DAYS_SINCE_INC_MULTIPLIER = 2; //y
 const DAYS_SINCE_INC_RANGE = 3; //z
 const DAYS_SINCE_INC_INVERSE_ADDITION = 2; //w
-const calcPriority = (userJlpt, wordJlpt, incrementDates, autofillPolicy) => {
+const calcPriority = (userJlpt, wordJlpt, incrementDates = [], autofillPolicy) => {
   const jlptTerm = JLPT_DIFF_MULTIPLIER * Math.max((wordJlpt - userJlpt) + 1, 0);
   const today = moment();
   const incTerm = incrementDates.reduce((acc, cur) => {
     const daysSince = today.diff(cur.date, 'days');
     return acc + DAYS_SINCE_INC_MULTIPLIER / ((daysSince / DAYS_SINCE_INC_RANGE) + DAYS_SINCE_INC_INVERSE_ADDITION);
   }, 0);
-  console.log(jlptTerm + incTerm);
   return jlptTerm + incTerm;
 }
 
