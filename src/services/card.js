@@ -51,31 +51,53 @@ async function startCardSession(userId) {
   const upcomingDoneToday = HistoryHandler.processSessionStart(user, operations);
   const numUpcomingLeftToday = getUpcomingLeftToday(user.upcoming.dailyNewCardLimit, upcomingDoneToday);
 
-  let upcomingEntries = [];
+  let todaysUpcoming = [];
   if (numUpcomingLeftToday > 0) {
-    const unordedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.words.map((el) => el.wordId));
+    const unorderedUpcomingWords = await WordModel.findUserWords(userId, user.upcoming.words.map((el) => el.wordId));
+    const normalizedUpcomingWords = normalize(unorderedUpcomingWords, 'wordId');
 
-    const todaysUpcoming = await UpcomingHandler.doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLeftToday);
-    upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
-    upcomingEntries = sortEntries(todaysUpcoming, upcomingEntries);
+    todaysUpcoming = await UpcomingHandler.doSessionPreprocessing(user, normalizedUpcomingWords, numUpcomingLeftToday);
+    const upcomingEntries = await DictModel.findByIds(todaysUpcoming.map((el) => el.wordId));
+    todaysUpcoming = serializeUpcoming(todaysUpcoming, upcomingEntries, normalizedUpcomingWords);
   }
 
   const cardsToDo = await WordModel.findTodaysCards(userId);
   const inProgEntries = await DictModel.findByIds(cardsToDo.map((el) => el.wordId));
+  const todaysInProg = serializeInProg(cardsToDo, inProgEntries);
 
   if (operations.user.isDirty()) {
     await UserModel.update(userId, operations.user.generate());
   }
 
-  return { upcoming: upcomingEntries, inProg: inProgEntries };
+  return { upcoming: todaysUpcoming, inProg: todaysInProg };
 }
 
-function sortEntries(order, entries) {
-  const d = {};
-  entries.forEach((el) => d[el._id] = el);
-  const sorted = [];
-  order.forEach(({ wordId }) => sorted.push(d[wordId]));
-  return sorted;
+function normalize(words, identifier) {
+  const ids = {};
+  words.forEach((w) => ids[w[identifier]] = w);  
+  return ids;
+}
+
+function serializeUpcoming(upcoming, entries, normalizedUpcomingWords) {
+  const normalizedEntries = normalize(entries, '_id');
+
+  const ret = [];
+  upcoming.forEach((el) => {
+    const word = normalizedUpcomingWords[el.wordId];
+    word.entry = normalizedEntries[el.wordId];
+    word.upcoming = el;
+    ret.push(word);
+  });
+
+  return ret;
+}
+
+function serializeInProg(userWords, entries) {
+  normalize(entries, '_id');
+  userWords.forEach((el) => {
+    el.entry = entries[el.wordId];
+  });
+  return userWords;
 }
 
 export default {

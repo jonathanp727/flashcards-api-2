@@ -12,20 +12,19 @@ import { checkLimitIsFresh } from '../lib/upcoming/auxiliary';
  * array then returns the upcoming cards to be done today.
  *
  * @param   user                    User 
- * @param   unorderedUpcomingWords  Array   The queried word data for all words in upcoming
+ * @param   normalizedUpcomingWords Object  The user's upcoming word data normalized by wordID
  * @param   numUpcomingLeftToday    Number  
  * @return                          array   An array containing only the upcoming words due today
  */
-async function doSessionPreprocessing(user, unordedUpcomingWords, numUpcomingLeftToday) {
+async function doSessionPreprocessing(user, normalizedUpcomingWords, numUpcomingLeftToday) {
   user.upcoming = new Upcoming(user.upcoming);
   // A check to see if a user has already done a session today since this
   // preprocesser only needs to be run once a day (unless limit is changed)
   if (!user.upcoming.isLimitFresh() && numUpcomingLeftToday !== user.upcoming.dailyNewCardLimit) return user.upcoming.words.slice(0, numUpcomingLeftToday);
 
   // Normalize upcoming words by wordId for easy access in upcominghandler
-  const upcomingData = normalize(unordedUpcomingWords);
 
-  const expiredIds = user.upcoming.removeExpiredCards(upcomingData);
+  const expiredIds = user.upcoming.removeExpiredCards(normalizedUpcomingWords);
   if (expiredIds.length > 0) {
     await UserModel.update(user._id, { $pull: { 'upcoming.words': { wordId: { $in: wordIds } } } });
     await WordModel.updateMany(user._id, wordIds, { $set: { card: null } });

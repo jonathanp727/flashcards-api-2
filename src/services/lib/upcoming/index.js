@@ -68,7 +68,6 @@ Upcoming.prototype = {
     let numAdded = 0;
     while (this.words.length < this.dailyNewCardLimit) {
       const word = await cursor.next();
-      console.log(word);
       if (!word) {
         // Reached end of current resource
 
