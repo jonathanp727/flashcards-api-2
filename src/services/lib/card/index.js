@@ -11,13 +11,19 @@ function Card (card = null, delayed = false) {
     // next appearance in the flashcard deck.  If a card is incremented again before it's next appearance in the flashcard
     // deck, reset card regardless of kindaKnew.
     this.caution = card.caution;
+    // `started` determines whether a user has actually seen the card or not.  Normally you
+    // could just figure that out by seeing that the date is set to null.  But with delayed
+    // cards that are to be started at a certain date in the future, that isn't possible.
+    this.started = card.started;
   } else {
     // Creating a card with delayed set to true creates a card that appears x days 
     // in the future instead of right away
     if (delayed) {
+      this.started = false;
       this._softReset();
     } else {
       this.date = null;
+      this.started = false;
       this._reset();
     }
   }
@@ -28,6 +34,7 @@ Card.prototype = {
   // Processes card after it's done by user, returns whether user was correct or not (whether they should redo)
   do: function (response) {
     this.caution = false;
+    this.started = true;
 
     const isCorrect = isReponseCorrect(response);
     if (!isCorrect) {
