@@ -74,7 +74,7 @@ async function startCardSession(userId) {
 
 function normalize(words, identifier) {
   const ids = {};
-  words.forEach((w) => ids[w[identifier]] = w);  
+  words.forEach((w) => ids[w[identifier]] = w);
   return ids;
 }
 

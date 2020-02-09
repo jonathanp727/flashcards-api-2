@@ -33,12 +33,19 @@ async function doSessionPreprocessing(user, normalizedUpcomingWords, numUpcoming
   // Functions for doAutofill to call that append additional db operations
   // Done in order to keep all db updates away from strict business logic files
   const createWordsOperation = [];
-  const createWord = (wordId, jlpt) => createWordsOperation.push(new Word({
-    userId: user._id,
-    wordId,
-    jlpt,
-    withCard: true,
-  }));
+  const createWord = (wordId, jlpt) => {
+    const word = new Word({
+      userId: user._id,
+      wordId,
+      jlpt,
+      withCard: true,
+    });
+    createWordsOperation.push(word);
+
+    // Modifying the paramater to add new words since we will send this data to client.
+    // NOT GOOD PRACTICE -- FIX IN NEXT VERSION
+    normalizedUpcomingWords[wordId] = word;
+  }
   const addCardWordIds = []
   const addCardToWord = (wordId) => addCardWordIds.push(wordId);
   const { numAdded, updatedJlpt } = await user.upcoming.doAutofill(createWord, addCardToWord, user._id, user.stats.jlpt);
